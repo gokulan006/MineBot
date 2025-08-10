@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroMine - AI Mining Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.5.0/css/all.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="logo" href="{{ url_for('static', filename='logo.png') }}">
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="NeuroMine Logo">
+            <span class="app-name">NeuroMine</span>
+        </div>
+        
+        <div class="sidebar-section">
+            <button class="new-chat-btn" id="newChatBtn">
+                <i class="fas fa-plus btn-icon"></i>
+                <span class="btn-text">New Chat</span>
+            </button>
+            <button class="nav-btn" id="newsBtn">
+                <i class="fas fa-newspaper btn-icon"></i>
+                <span class="btn-text">Industry News</span>
+            </button>
+            <button class="nav-btn" id="settingsBtn">
+                <i class="fas fa-cog btn-icon"></i>
+                <span class="btn-text">Settings</span>
+            </button>
+
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar">👤</div>
+                <div class="user-info">
+                    <span class="user-name">Guest User</span>
+                    <span class="user-status">Free Plan</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar-toggle" id="sidebarToggle">
+            <button class="toggle-btn">
+                ☰
+            </button>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="chat-header-content">
+                <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="NeuroMine Logo">
+                <div class="header-text">
+                    <h1>NeuroMine Assistant</h1>
+                    <p>Your AI-powered mining industry expert</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" id="darkModeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <div class="welcome-content">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="NeuroMine Logo" class="welcome-logo">
+                    <h2>Welcome to NeuroMine</h2>
+                    <p>I'm your AI assistant specialized in the mining industry. How can I help you today?</p>
+                    <div class="quick-questions">
+                        <button class="quick-question">Mining regulations in India?</button>
+                    </div>
+                    <div class="quick-questions">
+                        <button class="quick-question">What are the standard safety measures in Indian mines?</button>
+                    </div>
+                    <div class="quick-questions">
+                        <button class="quick-question">What are the rules under the MMDR Act?</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <form id="chatForm" class="chat-form">
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        placeholder="Ask about mining commodities, regulations, or market trends..." 
+                        required
+                        autocomplete="off"
+                    >
+                    <div class="input-actions">
+                        <button type="button" class="input-action-btn" id="attachFileBtn">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" id="sendButton" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+            <div class="input-footer">
+                <small>NeuroMine may produce inaccurate information. Verify critical data.</small>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+            <div class="message bot-message">
+                <div class="message-content">
+                    <div class="message-avatar">
+                        <img src="{{ url_for('static', filename='logo.png') }}" alt="AI Avatar">
+                    </div>
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="settingsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button id="closeSettings" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-option">
+                    <label for="languageSelect">Language:</label>
+                    <select id="languageSelect" class="setting-select">
+                        <option value="en">English</option>
+                        <option value="hi">हिंदी (Hindi)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveSettings" class="save-btn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const newsBtn = document.getElementById('newsBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const settingbtn= document.getElementById('settingsBtn');
+        let sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
+        const overlay = document.createElement("div");
+
+        overlay.classList.add("overlay");
+        document.body.appendChild(overlay);
+
+        // Add these variables at the top of your script
+        let currentLanguage = 'en';  
+        const languageMap = {
+            en: {
+                welcomeTitle: "Welcome to NeuroMine",
+                welcomeText: "I'm your AI assistant specialized in the mining industry. How can I help you today?",
+                quickQuestions: [
+                    "Mining regulations in India?",
+                    "What are the standard safety measures in Indian mines?",
+                    "What are the rules under the MMDR Act?"
+                ],
+                inputPlaceholder: "Ask about mining commodities, regulations, or market trends...",
+                disclaimer: "NeuroMine may produce inaccurate information. Verify critical data."
+            },
+            hi: {
+                welcomeTitle: "NeuroMine में आपका स्वागत है",
+                welcomeText: "मैं खनन उद्योग में विशेषज्ञता प्राप्त आपका AI सहायक हूँ। आज मैं आपकी कैसे मदद कर सकता हूँ?",
+                quickQuestions: [
+                    "भारत में खनन नियम क्या हैं?",
+                    "भारतीय खानों में मानक सुरक्षा उपाय क्या हैं?",
+                    "MMDR अधिनियम के तहत क्या नियम हैं?"
+                ],
+                inputPlaceholder: "खनन वस्तुओं, नियमों, या बाजार के रुझानों के बारे में पूछें...",
+                disclaimer: "NeuroMine गलत जानकारी दे सकता है। महत्वपूर्ण डेटा को सत्यापित करें।"
+            }
+        };
+
+        // Update the settings button event listener
+        settingsBtn.addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'flex';
+            document.getElementById('languageSelect').value = currentLanguage;
+        });
+
+        // Add these new event listeners for the modal
+        document.getElementById('closeSettings').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'none';
+        });
+
+        document.getElementById('saveSettings').addEventListener('click', () => {
+            currentLanguage = document.getElementById('languageSelect').value;
+            document.getElementById('settingsModal').style.display = 'none';
+            newchat();
+            updateUIForLanguage();
+            localStorage.setItem('neuroMineLanguage', currentLanguage);
+        });
+
+        // Function to update UI elements based on language
+        function updateUIForLanguage() {
+            const lang = languageMap[currentLanguage];
+            
+            // Update welcome message
+            const welcomeContent = document.querySelector('.welcome-content');
+            if (welcomeContent) {
+                welcomeContent.querySelector('h2').textContent = lang.welcomeTitle;
+                welcomeContent.querySelector('p').textContent = lang.welcomeText;
+                
+                // Update quick questions
+                const quickQuestions = welcomeContent.querySelectorAll('.quick-question');
+                quickQuestions.forEach((btn, index) => {
+                    btn.textContent = lang.quickQuestions[index];
+                });
+            }
+            
+            // Update input placeholder
+            document.getElementById('messageInput').placeholder = lang.inputPlaceholder;
+            
+            // Update disclaimer
+            document.querySelector('.input-footer small').textContent = lang.disclaimer;
+        }
+
+        // Update your sendMessage function to include language
+        async function sendMessage(message) {
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId,
+                        language: currentLanguage // Send the selected language to the server
+                    })
+                });
+                
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                
+                addMessage(data.answer);
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage(currentLanguage === 'en' 
+                    ? 'Sorry, I encountered an error. Please try again.'
+                    : 'क्षमा करें, मुझे एक त्रुटि का सामना करना पड़ा। कृपया पुनः प्रयास करें.', 
+                false);
+            }
+        }
+
+        // Update the newChatBtn event listener to use language
+        function newchat() {
+            document.getElementById('newChatBtn').click();
+        }
+        newChatBtn.addEventListener('click', () => {
+            const lang = languageMap[currentLanguage];
+            
+            chatMessages.innerHTML = `
+                <div class="welcome-message">
+                    <div class="welcome-content">
+                        <img src="{{ url_for('static', filename='logo.png') }}" alt="NeuroMine Logo" class="welcome-logo">
+                        <h2>${lang.welcomeTitle}</h2>
+                        <p>${lang.welcomeText}</p>
+                        <div class="quick-questions">
+                            <button class="quick-question">${lang.quickQuestions[0]}</button>
+                        </div>
+                        <div class="quick-questions">
+                            <button class="quick-question">${lang.quickQuestions[1]}</button>
+                        </div>
+                        <div class="quick-questions">
+                            <button class="quick-question">${lang.quickQuestions[2]}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Reattach event listeners to quick question buttons
+            document.querySelectorAll('.quick-question').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    messageInput.value = e.target.textContent;
+                    chatForm.dispatchEvent(new Event('submit'));
+                });
+            });
+            
+            sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
+        });
+
+        // Load language preference from localStorage if available
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLanguage = localStorage.getItem('neuroMineLanguage');
+            if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'hi')) {
+                currentLanguage = savedLanguage;
+                updateUIForLanguage();
+            }
+        });
+
+        overlay.addEventListener("click", () => {
+            sidebar.classList.remove("open");
+            overlay.classList.remove("show");
+        });
+        // Quick question buttons
+        document.querySelectorAll('.quick-question').forEach(button => {
+            button.addEventListener('click', (e) => {
+                messageInput.value = e.target.textContent;
+                chatForm.dispatchEvent(new Event('submit'));
+            });
+        });
+        
+        // Dark mode toggle
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+        
+         
+        // Add message to chat
+        function addMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            // Convert markdown to HTML
+            let htmlText = text
+            .replace(/^##\s+(.*$)/gm, '<h2>$1</h2>')
+            // Bold formatting
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            // Italic formatting
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            // Numbered/alphabetical points (a), (b), etc.
+            .replace(/\(([a-z])\)\s+(.*?(?=\n\([a-z]\)|$))/gs, '<li class="main-point"><span class="point-label">$1)</span> $2</li>')
+            // Sub-points with bullet/dash
+            .replace(/^[\-\*]\s+(.*$)/gm, '<li class="sub-point">$1</li>')
+            // Point titles (Flame Safety Lamps:)
+            .replace(/^([A-Z][a-z\s]+:)\s*(.*$)/gm, '<div class="point-title">$1</div><div class="point-content">$2</div>')
+            // Line breaks
+            .replace(/\n\n+/g, '</div><div class="paragraph">')
+            // Regulatory references section
+            .replace(/\[Regulatory Reference\]:/g, '<div class="regulatory-header">Regulatory References:</div>')
+            // Final wrap
+            .replace(/^(.*)$/s, '<div class="safety-response">$1</div>')
+            // Wrap main points in ordered list
+            .replace(/(<li class="main-point">.*<\/li>)+/gs, '<ol class="main-points">$&</ol>')
+            // Wrap sub-points in unordered list
+            .replace(/(<li class="sub-point">.*<\/li>)+/gs, '<ul class="sub-points">$&</ul>');
+                        
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="message-avatar">
+                        ${isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>'}
+                    </div>
+                    <div class="message-text">${htmlText}</div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Typing indicator functions
+        function showTyping() {
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+        
+        // Loading state
+        function setLoading(loading) {
+            sendButton.disabled = loading;
+            messageInput.disabled = loading;
+            
+            if (loading) {
+                sendButton.innerHTML = '<div class="loading-spinner"></div>';
+                showTyping();
+            } else {
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                hideTyping();
+            }
+        }
+        
+        // Send message to server
+         
+        
+        // Event Listeners
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            addMessage(message, true);
+            messageInput.value = '';
+            setLoading(true);
+            
+            await sendMessage(message);
+            setLoading(false);
+            messageInput.focus();
+        });
+        
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+        
+        // Sidebar toggle
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+        
+        
+        newsBtn.addEventListener('click', ()=> {
+            window.location.href = '/news';
+        });
+        
+        // Focus input on load
+        messageInput.focus();
+
+    </script>
+</body>
+</html>
