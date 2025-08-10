@@ -15,6 +15,7 @@ from langchain_core.output_parsers import StrOutputParser
 from src.prompt import SYSTEM_PROMPT, CONTEXTUALIZE_Q_N_SYSTEM_PROMPT
 from src.helper import get_session_history
 
+##
 # Load env vars
 load_dotenv()
 groq_api = os.getenv("GROQ_API_KEY")
@@ -180,4 +181,5 @@ def news_page():
     return render_template("news.html", articles=articles)
 
 if __name__ == "__main__":
+
     app.run(debug=True,threaded=False)
